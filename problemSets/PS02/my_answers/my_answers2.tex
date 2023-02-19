@@ -116,7 +116,71 @@
 		%\item
 		%How many iterations did it take to find the maximum likelihood estimates?
 	\end{enumerate}
-\lstinputlisting[language=R, firstline=1, lastline=22]{my_answers2.R}  
+\lstinputlisting[language=R, firstline=38, lastline=70]{my_answers2.R}  
+	\begin{enumerate}
+		\item [Output 1] The coefficients of the model represent the change in the log odds of supporting the policy associated with a one-unit change in the independent variable. For example, a one-unit increase in "countries" is associated with a 0.458452 increase in the log odds of supporting the policy, holding all other variables constant.
+		\item[Output 2] The output of the ANODEV test shows that the p-value is much smaller than 0.05, which indicates that the addition of the explanatory variables significantly improves the model fit. Therefore, we can reject the null hypothesis that the intercept-only model is adequate, and we can conclude that the model including the number of participating countries and sanctions is a better fit for the data.
+		\item[Output 3] Confidence intervals
+	\end{enumerate}
+\begin{lstlisting}[language=R]
+Output 1
+Call:
+glm(formula = choice ~ ., family = "binomial", data = data)
+
+Deviance Residuals: 
+Min       1Q   Median       3Q      Max  
+-1.4259  -1.1480  -0.9444   1.1505   1.4298  
+
+Coefficients:
+Estimate Std. Error z value Pr(>|z|)    
+(Intercept) -0.005665   0.021971  -0.258 0.796517    
+countries.L  0.458452   0.038101  12.033  < 2e-16 ***
+countries.Q -0.009950   0.038056  -0.261 0.793741    
+sanctions.L -0.276332   0.043925  -6.291 3.15e-10 ***
+sanctions.Q -0.181086   0.043963  -4.119 3.80e-05 ***
+sanctions.C  0.150207   0.043992   3.414 0.000639 ***
+---
+stars not wokring so replaced by
+Signif. codes:  0 *** 0.001 ** 0.01 * 0.05 . 0.1 , 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+Null deviance: 11783  on 8499  degrees of freedom
+Residual deviance: 11568  on 8494  degrees of freedom
+AIC: 11580
+
+Number of Fisher Scoring iterations: 4
+#######################################
+Output 2
+	Analysis of Deviance Table
+	
+	Model 1: choice ~ 1
+	Model 2: choice ~ countries + sanctions
+	Resid. Df Resid. Dev Df Deviance  Pr(>Chi)    
+	1      8499      11783                          
+	2      8494      11568  5   215.15 < 2.2e-16 ***
+	---
+Signif. codes:  0 *** 0.001 ** 0.01 * 0.05 . 0.1 , 1
+#######################################
+Output 3
+Confint
+                2.5 %    97.5 %
+(Intercept) 0.9524387 1.0381058
+countries.L 1.4679656 1.7044456
+countries.Q 0.9189295 1.0667733
+sanctions.L 0.6959419 0.8267142
+sanctions.Q 0.7654570 0.9094241
+sanctions.C 1.0661324 1.2667989
+\end{lstlisting}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\linewidth]{"Output 4"}
+	\caption{confidence intervals}
+	\label{fig:output-4}
+\end{figure}
+
+
+
 	\item
 	If any of the explanatory variables are significant in this model, then:
 	\begin{enumerate}
@@ -124,12 +188,58 @@
 		For the policy in which nearly all countries participate [160 of 192], how does increasing sanctions from 5\% to 15\% change the odds that an individual will support the policy? (Interpretation of a coefficient)
 %		\item
 %		For the policy in which very few countries participate [20 of 192], how does increasing sanctions from 5\% to 15\% change the odds that an individual will support the policy? (Interpretation of a coefficient)
+
+\lstinputlisting[language=R, firstline=72, lastline=83]{my_answers2.R}  
+\begin{lstlisting}[language=R]
+Increasing sanctions from 5% to 15% increases the odds of supporting the policy by a factor of 0.98 
+\end{lstlisting}
+	
 		\item
 		What is the estimated probability that an individual will support a policy if there are 80 of 192 countries participating with no sanctions? 
+\lstinputlisting[language=R, firstline=87, lastline=93]{my_answers2.R}  
+\begin{lstlisting}[language=R]
+
+Call:
+glm(formula = choice ~ sanctions, family = binomial, data = policy_80)
+
+Deviance Residuals: 
+Min      1Q  Median      3Q     Max  
+-1.315  -1.157  -1.033   1.135   1.329  
+
+Coefficients:
+Estimate Std. Error z value Pr(>|z|)    
+(Intercept)  0.005309   0.038188   0.139 0.889433    
+sanctions.L -0.383502   0.074974  -5.115 3.13e-07 ***
+sanctions.Q -0.258570   0.076377  -3.385 0.000711 ***
+sanctions.C  0.144713   0.077755   1.861 0.062724 .  
+---
+Signif. codes:  0 *** 0.001 ** 0.01 * 0.05 . 0.1 , 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+Null deviance: 3874.6  on 2794  degrees of freedom
+Residual deviance: 3834.4  on 2791  degrees of freedom
+AIC: 3842.4
+
+Number of Fisher Scoring iterations: 4
+
+\end{lstlisting}
 		\item
 		Would the answers to 2a and 2b potentially change if we included the interaction term in this model? Why? 
 		\begin{itemize}
 			\item Perform a test to see if including an interaction is appropriate.
+			\lstinputlisting[language=R, firstline=96, lastline=99]{my_answers2.R}  
+			\begin{lstlisting}[language=R]
+			Analysis of Deviance Table
+			
+			Model 1: choice ~ countries + sanctions
+			Model 2: choice ~ countries * sanctions
+			Resid. Df Resid. Dev Df Deviance Pr(>Chi)
+			1      8494      11568                     
+			2      8488      11562  6   6.2928   0.3912
+			\end{lstlisting}
+		\item The output of the ANODEV test shows that the p-value is 0.3912, which is greater than the usual significance level of 0.05. This suggests that including the interaction term does not significantly improve the model fit, and the additive model is adequate. Therefore, we can conclude that the relationship between the response variable and the explanatory variables is well-captured by the additive model that includes only the main effects.
+		
 		\end{itemize}
 	\end{enumerate}
 	\end{enumerate}

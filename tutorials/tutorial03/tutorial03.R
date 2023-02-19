@@ -3,7 +3,7 @@
 # set wd
 # clear global .envir
 #####################
-
+library(tidyverse)
 # remove objects
 rm(list=ls())
 # detach all libraries
@@ -48,17 +48,65 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 # nsibs: Number of siblings
 # intact: Whether the respondent lived with both biological parents at age 14 (Yes or No)
 
-graduation <- read.table("http://statmath.wu.ac.at/courses/StatsWithR/Powers.txt")
+graduation <- read.table("http://statmath.wu.ac.at/courses/StatsWithR/Powers.txt",
+                         stringsAsFactors = TRUE)
 
 # (a) Perform a logistic regression of hsgrad on the other variables in the data set.
 # Compute a likelihood-ratio test of the omnibus null hypothesis that none of the explanatory variables influences high-school graduation. 
 # Then construct 95-percent confidence intervals for the coefficients of the seven explanatory variables. 
 # What conclusions can you draw from these results? Finally, offer two brief, but concrete, interpretations of each of the estimated coefficients of income and intact.
+data <- graduation
+as.logical(ifelse(data$hsgrad=="yes",1,0))
+as.logical(ifelse(data$nonwhite=="yes",1,0))
 
+
+mod <- glm(hsgrad~.,data = graduation,family = 'binomial')
+glimpse(mod)
+summary(mod)
 # (b) The logistic regression in the previous problem assumes that the partial relationship between the log-odds of high-school graduation and number of siblings is linear. 
 # Test for nonlinearity by fitting a model that treats nsibs as a factor, performing an appropriate likelihood-ratio test. 
 # In the course of working this problem, you should discover an issue in the data. 
 # Deal with the issue in a reasonable manner. 
 # Does the result of the test change?
+as.factor(data$nsibs)
 
+nullmod <- glm(hsgrad~1,data = data,
+               family = 'binomial')
+summary(nullmod)
+
+anova(nullmod,mod,test = 'Chisq')
+anova(nullmod,mod,test = 'LRT') #same
+
+exp(confint(mod))
+confmod <- data.frame(cbind(lower = exp(confint(mod)[,1]),
+                                        coefs = exp(coef(mod)),
+                                        upper = exp(confint(mod)[,2])))
+
+
+ggplot(data = confmod,mapping = aes(x row.names(confmod),y = coefs)) +
+  geom_point()+
+  geom_errorbar(aes(ymin = lower,ymax = upper),colour = 'red')
+
+model.matrix(~unique(nsibs),data = data)
+model.matrix(~as.factor(unique(nsibs)),data = data)
+
+with(data,expand.grid(nonwhite = unique(nonwhite)),
+     mhs = unique(mhs),
+     fhs = unique(fhs))
+
+data$nsibs_cut <- cut(data$nsibs,
+                            breaks = c(0,1,3,7,10,Inf),
+                            include.lowest = TRUE,
+                            labels = c("none",'one','three','seven','ten'))
+summary(data$nsibs_cut)
+
+data%>%
+  ggplot(data$nsibs_cut,mapping =aes(x= nsibs_cut,y= hsgrad))+
+   geom_point()
+  
+
+sib <- glm(hsgrad~as.factor(nsibs>=0),data = data,
+               family = 'binomial')
+summary(sib)
+anova(sib,mod,test = 'Chisq')
 
