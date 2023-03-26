@@ -22,7 +22,9 @@ pkgTest <- function(pkg){
     install.packages(new.pkg,  dependencies = TRUE)
   sapply(pkg,  require,  character.only = TRUE)
 }
-
+library(tidyverse)
+library(MASS)
+library(nnet)
 # here is where you load any necessary packages
 # ex: stringr
 # lapply(c("stringr"),  pkgTest)
@@ -41,13 +43,30 @@ lapply(c(),  pkgTest)
 # - a rating of the prestige of the student’sPhD department (phd); 
 # - number of articles published by the student’s mentor during the three-yearperiod (ment)
 
+long_data$fem <- factor(long_data$fem,
+                           levels = c("0", "1"),
+                           labels = c(" not ",
+                                      "female"))
+                                    
+long_data$mar <- factor(long_data$mar,
+                        levels = c("0", "1"),
+                        labels = c(" other ",
+                                   "married"))
+long_data$mar
 # (a) Examine the distribution of the response variable. 
 # Does least-squares linear regression appear a promising strategy for these data?
+mod.1 <- lm(art ~. ,data = long_data)
+summary(mod.1)
 
+glimpse(mod.1)
 # (b) Perform a Poisson regression of number of articles published on the explanatory variables. 
 # What conclusions would you draw from this analysis?
+mod.2 <- glm(art~.,data = long_data, poisson(link = log))
+summary(mod.2)
 
-# (c) Consider the possibility of over-dispersion, either by fitting an over-dispersed Poisson model. 
+
+
+# (c) Consider mod.2# (c) Consider the possibility of over-dispersion, either by fitting an over-dispersed Poisson model. 
 # Is there evidence for over-dispersion? How, if at all, do the results change when over-dispersion is taken into account
 
 long_data <- read.table("http://statmath.wu.ac.at/courses/StatsWithR/Long.txt", header=T)

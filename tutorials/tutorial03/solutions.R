@@ -145,3 +145,4 @@ ggplot(data = confMod3, mapping = aes(x = row.names(confMod3), y = coefs)) +
   coord_flip() +
   scale_y_continuous(breaks = seq(0,8,1)) +
   labs(x = "Terms", y = "Coefficients")
+

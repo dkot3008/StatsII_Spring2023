@@ -15,6 +15,14 @@ detachAllPackages <- function() {
 }
 detachAllPackages()
 
+install.packages("foreign")
+install.packages("nnet")
+install.packages("reshape2")
+install.packages("MASS")
+library('MASS')
+library('foreign')
+library("nnet")
+library(reshape2)
 # load libraries
 pkgTest <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[,  "Package"])]
@@ -49,9 +57,46 @@ workingMoms <- read.table("http://statmath.wu.ac.at/courses/StatsWithR/WorkingMo
 
 # (a) Perform an ordered (proportional odds) logistic regression of attitude toward working mothers on the other variables.
 # What conclusions do you draw?
+table(workingMoms$attitude)
+table(workingmomsvector)
+typeof(workingMoms$attitude)
+# Specify that they are ordinal variables with the given levels
+workmv <- factor(workingMoms$attitude, order = TRUE, 
+                                    levels = c("SD", "D", "A","SA"))
+workingMoms$gender <- as.factor(workingMoms$gender)
+workingMoms$race <- factor(workingMoms$race,
+                              levels = c(0,1),
+                              labels = c('non-white','white'))
 
+#workingMoms$year <- factor(workingMoms$year,
+#                           levels = c('year1977','year1998'),
+#                           labels = c("1977",'1988'))
+
+# Print the result to the console
+workingMoms$attitude <- workmv
+modb <- glm(attitude ~ ., # period functions as omnibus selector (kitchen sink additive model)
+           data = workingMoms, 
+           family = "binomial")
+
+modl <- glm(attitude ~ ., # period functions as omnibus selector (kitchen sink additive model)
+           data = workingMoms, 
+           family = binomial(link = "logit"))
+summary(modb)
+
+#####martyn way
+m <- polr(attitude~.,
+     data = workingMoms,Hess = TRUE)
+summary(m)
+ctable <- coef(summary(m,))
+p <- pnorm(abs(ctable[,"t value"]),lower.tail = FALSE * 2
+ctable <- cbind(ctable,"p value"= p)
+
+ci <- confint(m)
+exp(cbind(OR = coef(m),ci))
 # (b) Assess whether the proportional-odds assumption appears to hold for this regression. 
 # Fit a multinomial logit model to the data, and compare and contrast the results with those from the proportional odds model.
+workingMoms$attitude <- relevel(workingMoms$attitude)
+
 
 # (c) Consider that possibility that gender interacts with the other explanatory variables in influencing the response variable. 
 # What do you find?

@@ -60,8 +60,8 @@
 \newcommand{\Sref}[1]{Section~\ref{#1}}
 \newtheorem{hyp}{Hypothesis}
 
-\title{Problem Set 2}
-\date{Due: February 19, 2023}
+\title{Problem Set 3}
+\date{Due: March 26, 2023}
 \author{Applied Stats II}
 
 
@@ -71,7 +71,7 @@
 	\begin{itemize}
 		\item Please show your work! You may lose points by simply writing in the answer. If the problem requires you to execute commands in \texttt{R}, please include the code you used to get your answers. Please also include the \texttt{.R} file that contains your code. If you are not sure if work needs to be shown for a particular problem, please ask.
 		\item Your homework should be submitted electronically on GitHub in \texttt{.pdf} form.
-		\item This problem set is due before 23:59 on Sunday February 19, 2023. No late assignments will be accepted.
+		\item This problem set is due before 23:59 on Sunday March 26, 2023. No late assignments will be accepted.
 	%	\item Total available points for this homework is 80.
 	\end{itemize}
 
@@ -83,7 +83,17 @@
 	\vspace{.25cm}
 %\section*{Question 1} %(20 points)}
 %\vspace{.25cm}
-\noindent We're interested in what types of international environmental agreements or policies people support (\href{https://www.pnas.org/content/110/34/13763}{Bechtel and Scheve 2013)}. So, we asked 8,500 individuals whether they support a given policy, and for each participant, we vary the (1) number of countries that participate in the international agreement and (2) sanctions for not following the agreement. \\
+\noindent Question 1
+We are interested in how governments’ management of public resources impacts economic prosperity. Our data come from Alvarez, Cheibub, Limongi, and Przeworski (1996) and is labelled gdpChange.csv on GitHub. The dataset covers 135 countries observed between 1950 or the year of independence or the first year forwhich data on economic growth are available (”entry year”), and 1990 or the last year for which data on economic growth are available (”exit year”). The unit of analysis is a particular country during a particular year, for a total > 3,500 observations.
+• Response variable:
+– GDPWdiff: Difference in GDP between year t and t−1. Possible categories include:
+”positive”, ”negative”, or ”no change” • Explanatory variables:
+– REG: 1=Democracy; 0=Non-Democracy
+– OIL: 1=if the average ratio of fuel exports to total exports in 1984-86 exceeded 50%; 0= otherwise
+1
+Please answer the following questions:
+1. Construct and interpret an unordered multinomial logit with GDPWdiff as the output and ”no change” as the reference category, including the estimated cutoff points and coefficients.
+2. Construct and interpret an ordered multinomial logit with GDPWdiff as the outcome variable, including the estimated cutoff points and coefficients. \\
 
 \noindent Load in the data labeled \texttt{climateSupport.csv} on GitHub, which contains an observational study of 8,500 observations.
 
