@@ -1,0 +1,216 @@
+
+R version 4.1.2 (2021-11-01) -- "Bird Hippie"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> # Regression table in main analysis
+> # Last updated Apr 13 2022
+> library(tidyverse)
+── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
+✔ ggplot2 3.3.5     ✔ purrr   0.3.4
+✔ tibble  3.1.6     ✔ dplyr   1.0.7
+✔ tidyr   1.1.4     ✔ stringr 1.4.0
+✔ readr   2.1.0     ✔ forcats 0.5.1
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+> library(texreg)
+Version:  1.37.5
+Date:     2020-06-17
+Author:   Philip Leifeld (University of Essex)
+
+Consider submitting praise using the praise or praise_interactive functions.
+Please cite the JSS article in your publications -- see citation("texreg").
+
+Attaching package: ‘texreg’
+
+The following object is masked from ‘package:tidyr’:
+
+    extract
+
+> library(fixest)
+(Permanently remove the following message with fixest_startup_msg(FALSE).)
+fixest 0.10.0:
+- vcov: new argument 'vcov' that replaces 'se' and 'cluster' in all functions
+(retro compatibility is ensured).
+- function 'dof()' has been renamed into 'ssc()' (i.e. small sample correction).
+From fixest 0.9.0 onward: BREAKING changes! 
+- In i():
+    + the first two arguments have been swapped! Now it's i(factor_var,
+continuous_var) for interactions.
+    + argument 'drop' has been removed (put everything in 'ref' now).
+- In feglm(): 
+    + the default family becomes 'gaussian' to be in line with glm(). Hence, for
+Poisson estimations, please use fepois() instead.
+> library(here)
+here() starts at /Users/elisha/Dropbox/current-research/Glynn - Race and Policing/Papers/Published Papers/JOP_RacialBias
+> ### load data -------
+> load(here('data','ois_data_for_models.RData'))
+> 
+> # Table 2 main analysis Logistic -------
+> glm_main1 <- feglm(fatal~Black + Hispanic + Asian,
++                    data=orig,
++                    family=binomial(link="logit"),
++                    se="cluster",
++                    cluster="new_group_id")
+> glm_main2 <- feglm(fatal~Black + Hispanic + Asian +city_clean,
++                    data=orig,
++                    family=binomial(link="logit"),
++                    se="cluster",
++                    cluster="new_group_id")
+> glm_main3 <- feglm(fatal~Black + Hispanic + Asian +trauma10,
++                    data=orig,
++                    family=binomial(link="logit"),
++                    se="cluster",
++                    cluster="new_group_id")
+NOTE: 24 observations removed because of NA values (RHS: 24).
+> glm_main4 <- feglm(fatal~Black + Hispanic + Asian +trauma10 +
++                      city_clean, 
++                    data=orig,
++                    family=binomial(link="logit"),
++                    se="cluster",
++                    cluster="new_group_id")
+NOTE: 24 observations removed because of NA values (RHS: 24).
+> 
+> 
+> name_map <- list( "Black" = "Black",
++                   "Hispanic" = "Hispanic",
++                   "Asian" = "Asian/AI/AN/PI",
++                   "trauma10" = "Distance",
++                   "city_cleanHouston" = "Houston",
++                   "city_cleanKing County" = "King County",
++                   "city_cleanLos Angeles" = "Los Angeles",
++                   "city_cleanOrlando" = "Orlando",
++                   "city_cleanSan Jose" = "San Jose",
++                   "city_cleanSeattle" = "Seattle",
++                   "city_cleanTucson" = "Tucson",
++                   "(Intercept)" = "Intercept")
+> 
+> 
+> 
+> screenreg(list(glm_main1,glm_main2,glm_main3,glm_main4),
++           custom.coef.map = name_map,
++           digits=2,
++           caption = "Estimated relationship between civilian race and probability of fatality conditional upon being involved in an officer-involved shooting. Cells show logit coefficients with cluster-robust standard errors. Omitted category is White civilians and Charlottte. Distance is in miles.",
++           booktabs = T,
++           label = "tab:mainLogitTable",
++           float.pos = "ht!",
++           include.adjrs = FALSE,
++           include.aic = FALSE,
++           include.rs = FALSE,
++           include.bic = FALSE,
++           include.loglik = FALSE,
++           include.deviance = FALSE,
++           include.pseudors = FALSE,
++           use.packages = F)
+
+============================================================
+                  Model 1    Model 2    Model 3    Model 4  
+------------------------------------------------------------
+Black               -0.77 *    -0.70 *    -0.74 *    -0.67 *
+                    (0.32)     (0.33)     (0.32)     (0.33) 
+Hispanic             0.27       0.10       0.29       0.13  
+                    (0.31)     (0.32)     (0.31)     (0.31) 
+Asian/AI/AN/PI       0.94       0.82       0.97       0.91  
+                    (0.62)     (0.58)     (0.63)     (0.58) 
+Distance                                   0.14       0.41  
+                                          (0.19)     (0.21) 
+Houston                         0.00                 -0.21  
+                               (0.57)                (0.63) 
+King County                     0.27                 -0.12  
+                               (0.76)                (0.81) 
+Los Angeles                     1.26 *                1.15  
+                               (0.57)                (0.62) 
+Orlando                         0.59                  0.52  
+                               (0.65)                (0.70) 
+San Jose                        0.18                  0.16  
+                               (0.65)                (0.69) 
+Seattle                         1.25                  1.27  
+                               (0.73)                (0.77) 
+Tucson                          1.61 *                1.64 *
+                               (0.69)                (0.73) 
+Intercept            0.07      -0.80      -0.04      -1.00  
+                    (0.25)     (0.59)     (0.28)     (0.64) 
+------------------------------------------------------------
+pseudo.r.squared     0.04       0.09       0.04       0.10  
+nobs              1274       1274       1250       1250     
+AIC               1693.21    1620.36    1666.01    1586.54  
+BIC               1713.81    1677.01    1691.67    1648.11  
+Log Likelihood    -842.61    -799.18    -828.01    -781.27  
+============================================================
+*** p < 0.001; ** p < 0.01; * p < 0.05
+Warning messages:
+1: In doTryCatch(return(expr), name, parentenv, handler) :
+  texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: R$^2$texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: Adj. R$^2$texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: within.r.squaredtexreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: Sigma
+2: In doTryCatch(return(expr), name, parentenv, handler) :
+  texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: R$^2$texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: Adj. R$^2$texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: within.r.squaredtexreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: Sigma
+3: In doTryCatch(return(expr), name, parentenv, handler) :
+  texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: R$^2$texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: Adj. R$^2$texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: within.r.squaredtexreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: Sigma
+4: In doTryCatch(return(expr), name, parentenv, handler) :
+  texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: R$^2$texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: Adj. R$^2$texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: within.r.squaredtexreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: Sigma
+> 
+> # table 2 main paper ------
+> texreg(list(glm_main1,glm_main2,glm_main3,glm_main4),
++        custom.coef.map = name_map,
++        digits=2,
++        caption = "Estimated relationship between civilian race and probability of fatality conditional upon being involved in an officer-involved shooting. Cells show logit coefficients with cluster-robust standard errors. Omitted category is White civilians and Charlotte. Distance is in tens of miles.",
++        booktabs = T,
++        label = "tab:mainLogitTable",
++        float.pos = "ht!",
++        include.adjrs = FALSE,
++        include.aic = FALSE,
++        include.rs = FALSE,
++        include.bic = FALSE,
++        include.loglik = FALSE,
++        include.deviance = FALSE,
++        include.pseudors = FALSE,
++        use.packages = F,
++        file = here("tables","main-glm-regression.tex"))
+The table was written to the file '/Users/elisha/Dropbox/current-research/Glynn - Race and Policing/Papers/Published Papers/JOP_RacialBias/tables/main-glm-regression.tex'.
+
+Warning messages:
+1: In doTryCatch(return(expr), name, parentenv, handler) :
+  texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: R$^2$texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: Adj. R$^2$texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: within.r.squaredtexreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: Sigma
+2: In doTryCatch(return(expr), name, parentenv, handler) :
+  texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: R$^2$texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: Adj. R$^2$texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: within.r.squaredtexreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: Sigma
+3: In doTryCatch(return(expr), name, parentenv, handler) :
+  texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: R$^2$texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: Adj. R$^2$texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: within.r.squaredtexreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: Sigma
+4: In doTryCatch(return(expr), name, parentenv, handler) :
+  texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: R$^2$texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: Adj. R$^2$texreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: within.r.squaredtexreg used the broom package to extract the following GOF measures, but could not cast them to numeric type: Sigma
+> 
+> # predicted probabilities of main specification model 1-----
+> round(exp(coef(glm_main1)) / (1 + exp(coef(glm_main1))),2)
+(Intercept)       Black    Hispanic       Asian 
+       0.52        0.32        0.57        0.72 
+> 
+> # how many unique incidents ---
+> length(unique(orig$new_group_id)) #748
+[1] 748
+> # how many unique incidents models with distance---
+> orig %>% filter(!is.na(trauma10)) %>% 
++   select(new_group_id) %>%
++   unique() %>%
++   tally()
+    n
+1 729
+> # 729
+> 
+> proc.time()
+   user  system elapsed 
+ 14.546   0.368  15.044 

@@ -1,0 +1,114 @@
+
+R version 4.1.2 (2021-11-01) -- "Bird Hippie"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> # JOP R and R
+> # Descriptives
+> # Last Updated Wed Apr 13, 2022
+> library(tidyverse)
+── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
+✔ ggplot2 3.3.5     ✔ purrr   0.3.4
+✔ tibble  3.1.6     ✔ dplyr   1.0.7
+✔ tidyr   1.1.4     ✔ stringr 1.4.0
+✔ readr   2.1.0     ✔ forcats 0.5.1
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+> library(texreg)
+Version:  1.37.5
+Date:     2020-06-17
+Author:   Philip Leifeld (University of Essex)
+
+Consider submitting praise using the praise or praise_interactive functions.
+Please cite the JSS article in your publications -- see citation("texreg").
+
+Attaching package: ‘texreg’
+
+The following object is masked from ‘package:tidyr’:
+
+    extract
+
+> library(sandwich)
+> library(patchwork)
+> library(lubridate)
+
+Attaching package: ‘lubridate’
+
+The following objects are masked from ‘package:base’:
+
+    date, intersect, setdiff, union
+
+> library(here)
+here() starts at /Users/elisha/Dropbox/current-research/Glynn - Race and Policing/Papers/Published Papers/JOP_RacialBias
+> 
+> ### load data -------
+> load(here('data','ois_data_for_models.RData'))
+> 
+> # Table 1 summary by race and fatality
+> table(orig$fatal,orig$civilian_race_factor,exclude=NULL)
+   
+    White Black Hispanic Asian/AI/AN/PI
+  0   118   329      208             11
+  1   126   162      290             30
+> round(prop.table(table(orig$fatal,orig$civilian_race_factor),margin = 2),2)
+   
+    White Black Hispanic Asian/AI/AN/PI
+  0  0.48  0.67     0.42           0.27
+  1  0.52  0.33     0.58           0.73
+> 
+> chisq <- chisq.test(orig$fatal,orig$civilian_race_factor)
+> round(chisq$statistic,3)
+X-squared 
+   76.888 
+> chisq$p.value
+[1] 1.426589e-16
+> 
+> # Figure 2 OIS per month by cities
+> facetSettings <-
++   theme(panel.grid.major = element_line("lightgray",0.5),
++         panel.grid.minor = element_line("lightgray",0.25))
+> 
+> 
+> ois %>% filter(!is.na(civilian_race_factor)) %>%
++   filter(city_clean != "San Antonio") %>%
++   filter(Date >"2009-12-01") %>%
++   group_by(month = floor_date(Date, 'month'), city_clean) %>%
++   count() %>%
++   ggplot(aes(x = month, y = log(n+1))) + #
++   stat_smooth() +
++   geom_point() +
++   facet_wrap(~ city_clean,as.table = FALSE) +
++   labs(x='Month-Year', y='Number of OIS', 
++        title='Officer-Involved Shootings Per Month') +
++   facetSettings +
++   scale_y_continuous(breaks=c(log(1),log(11),log(21),
++                               log(101), log(201),
++                               log(401)),
++                      labels = c("0", "10","20", "100",
++                                 "200","400")) +
++   theme_bw() 
+`geom_smooth()` using method = 'loess' and formula 'y ~ x'
+> ggsave(here('figs','ObsPerMonth-fig1.tiff'),
++        width = 9,height = 6,dpi=300)
+`geom_smooth()` using method = 'loess' and formula 'y ~ x'
+> 
+> proc.time()
+   user  system elapsed 
+ 16.453   0.636  17.457 

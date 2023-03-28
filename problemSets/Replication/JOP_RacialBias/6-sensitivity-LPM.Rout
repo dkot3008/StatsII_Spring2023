@@ -1,0 +1,186 @@
+
+R version 4.1.2 (2021-11-01) -- "Bird Hippie"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> # JOP
+> # LPM sensitivity using Cinelli and Hazlett package
+> # Last updated April 15, 2022
+> library(tidyverse)
+── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
+✔ ggplot2 3.3.5     ✔ purrr   0.3.4
+✔ tibble  3.1.6     ✔ dplyr   1.0.7
+✔ tidyr   1.1.4     ✔ stringr 1.4.0
+✔ readr   2.1.0     ✔ forcats 0.5.1
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+> library(texreg)
+Version:  1.37.5
+Date:     2020-06-17
+Author:   Philip Leifeld (University of Essex)
+
+Consider submitting praise using the praise or praise_interactive functions.
+Please cite the JSS article in your publications -- see citation("texreg").
+
+Attaching package: ‘texreg’
+
+The following object is masked from ‘package:tidyr’:
+
+    extract
+
+> library(sensemakr)
+See details in:
+Carlos Cinelli and Chad Hazlett (2020). Making Sense of Sensitivity: Extending Omitted Variable Bias. Journal of the Royal Statistical Society, Series B (Statistical Methodology).
+> library(fixest)
+(Permanently remove the following message with fixest_startup_msg(FALSE).)
+fixest 0.10.0:
+- vcov: new argument 'vcov' that replaces 'se' and 'cluster' in all functions
+(retro compatibility is ensured).
+- function 'dof()' has been renamed into 'ssc()' (i.e. small sample correction).
+From fixest 0.9.0 onward: BREAKING changes! 
+- In i():
+    + the first two arguments have been swapped! Now it's i(factor_var,
+continuous_var) for interactions.
+    + argument 'drop' has been removed (put everything in 'ref' now).
+- In feglm(): 
+    + the default family becomes 'gaussian' to be in line with glm(). Hence, for
+Poisson estimations, please use fepois() instead.
+> library(here)
+here() starts at /Users/elisha/Dropbox/current-research/Glynn - Race and Policing/Papers/Published Papers/JOP_RacialBias
+> ### load data -------
+> load(here('data','ois_data_for_models.RData'))
+> 
+> # LPM sensitivity analysis based on Table 7 appendix -----
+> # just do on main model
+> cluster_variable <- "new_group_id"
+> orig$year_factor <- factor(orig$year)
+> lpm_main1 <- lm(fatal~Black + Hispanic + Asian +trauma10 +
++                   city_clean, 
++                 data=orig)
+> s1 <- sensemakr(model = lpm_main1,
++                 treatment = "Black",
++                 benchmark_covariates = c("city_cleanLos Angeles",
++                                          "city_cleanSeattle",
++                                          "trauma10"),
++                 kd=3,
++                 ky =3)
+> 
+> 
+> t1 <- ovb_minimal_reporting(s1, format = 'latex')
+\begin{table}[!h]
+\centering
+\begin{tabular}{lrrrrrr}
+\multicolumn{7}{c}{Outcome: \textit{fatal}} \\
+\hline \hline 
+Treatment: & Est. & S.E. & t-value & $R^2_{Y \sim D |{\bf X}}$ & $RV_{q = 1}$ & $RV_{q = 1, \alpha = 0.05}$  \\ 
+\hline 
+\textit{Black} & -0.149 & 0.038 & -3.893 & 1.2\% & 10.5\% & 5.3\% \\ 
+\hline 
+df = 1238 & & \multicolumn{5}{r}{ \small \textit{Bound (3x city_cleanLos Angeles)}: $R^2_{Y\sim Z| {\bf X}, D}$ = 2.3\%, $R^2_{D\sim Z| {\bf X} }$ = 0.1\%} \\
+\end{tabular}
+\end{table}> cat(t1,file=here("tables","lpm-sensitivity1.tex"))
+> 
+> summary(s1)
+Sensitivity Analysis to Unobserved Confounding
+
+Model Formula: fatal ~ Black + Hispanic + Asian + trauma10 + city_clean
+
+Null hypothesis: q = 1 and reduce = TRUE 
+-- This means we are considering biases that reduce the absolute value of the current estimate.
+-- The null hypothesis deemed problematic is H0:tau = 0 
+
+Unadjusted Estimates of 'Black': 
+  Coef. estimate: -0.1492 
+  Standard Error: 0.0383 
+  t-value (H0:tau = 0): -3.8926 
+
+Sensitivity Statistics:
+  Partial R2 of treatment with outcome: 0.0121 
+  Robustness Value, q = 1: 0.1047 
+  Robustness Value, q = 1, alpha = 0.05: 0.0534 
+
+Verbal interpretation of sensitivity statistics:
+
+-- Partial R2 of the treatment with the outcome: an extreme confounder (orthogonal to the covariates) that explains 100% of the residual variance of the outcome, would need to explain at least 1.21% of the residual variance of the treatment to fully account for the observed estimated effect.
+
+-- Robustness Value, q = 1: unobserved confounders (orthogonal to the covariates) that explain more than 10.47% of the residual variance of both the treatment and the outcome are strong enough to bring the point estimate to 0 (a bias of 100% of the original estimate). Conversely, unobserved confounders that do not explain more than 10.47% of the residual variance of both the treatment and the outcome are not strong enough to bring the point estimate to 0.
+
+-- Robustness Value, q = 1, alpha = 0.05: unobserved confounders (orthogonal to the covariates) that explain more than 5.34% of the residual variance of both the treatment and the outcome are strong enough to bring the estimate to a range where it is no longer 'statistically different' from 0 (a bias of 100% of the original estimate), at the significance level of alpha = 0.05. Conversely, unobserved confounders that do not explain more than 5.34% of the residual variance of both the treatment and the outcome are not strong enough to bring the estimate to a range where it is no longer 'statistically different' from 0, at the significance level of alpha = 0.05.
+
+Bounds on omitted variable bias:
+
+--The table below shows the maximum strength of unobserved confounders with association with the treatment and the outcome bounded by a multiple of the observed explanatory power of the chosen benchmark covariate(s).
+
+              Bound Label R2dz.x R2yz.dx Treatment Adjusted Estimate
+ 3x city_cleanLos Angeles 0.0010  0.0226     Black           -0.1428
+     3x city_cleanSeattle 0.0116  0.0207     Black           -0.1281
+              3x trauma10 0.0050  0.0296     Black           -0.1327
+ Adjusted Se Adjusted T Adjusted Lower CI Adjusted Upper CI
+      0.0379    -3.7646           -0.2171           -0.0684
+      0.0382    -3.3576           -0.2030           -0.0533
+      0.0379    -3.5060           -0.2070           -0.0585
+> stable <- summary(s1)
+Sensitivity Analysis to Unobserved Confounding
+
+Model Formula: fatal ~ Black + Hispanic + Asian + trauma10 + city_clean
+
+Null hypothesis: q = 1 and reduce = TRUE 
+-- This means we are considering biases that reduce the absolute value of the current estimate.
+-- The null hypothesis deemed problematic is H0:tau = 0 
+
+Unadjusted Estimates of 'Black': 
+  Coef. estimate: -0.1492 
+  Standard Error: 0.0383 
+  t-value (H0:tau = 0): -3.8926 
+
+Sensitivity Statistics:
+  Partial R2 of treatment with outcome: 0.0121 
+  Robustness Value, q = 1: 0.1047 
+  Robustness Value, q = 1, alpha = 0.05: 0.0534 
+
+Verbal interpretation of sensitivity statistics:
+
+-- Partial R2 of the treatment with the outcome: an extreme confounder (orthogonal to the covariates) that explains 100% of the residual variance of the outcome, would need to explain at least 1.21% of the residual variance of the treatment to fully account for the observed estimated effect.
+
+-- Robustness Value, q = 1: unobserved confounders (orthogonal to the covariates) that explain more than 10.47% of the residual variance of both the treatment and the outcome are strong enough to bring the point estimate to 0 (a bias of 100% of the original estimate). Conversely, unobserved confounders that do not explain more than 10.47% of the residual variance of both the treatment and the outcome are not strong enough to bring the point estimate to 0.
+
+-- Robustness Value, q = 1, alpha = 0.05: unobserved confounders (orthogonal to the covariates) that explain more than 5.34% of the residual variance of both the treatment and the outcome are strong enough to bring the estimate to a range where it is no longer 'statistically different' from 0 (a bias of 100% of the original estimate), at the significance level of alpha = 0.05. Conversely, unobserved confounders that do not explain more than 5.34% of the residual variance of both the treatment and the outcome are not strong enough to bring the estimate to a range where it is no longer 'statistically different' from 0, at the significance level of alpha = 0.05.
+
+Bounds on omitted variable bias:
+
+--The table below shows the maximum strength of unobserved confounders with association with the treatment and the outcome bounded by a multiple of the observed explanatory power of the chosen benchmark covariate(s).
+
+              Bound Label R2dz.x R2yz.dx Treatment Adjusted Estimate
+ 3x city_cleanLos Angeles 0.0010  0.0226     Black           -0.1428
+     3x city_cleanSeattle 0.0116  0.0207     Black           -0.1281
+              3x trauma10 0.0050  0.0296     Black           -0.1327
+ Adjusted Se Adjusted T Adjusted Lower CI Adjusted Upper CI
+      0.0379    -3.7646           -0.2171           -0.0684
+      0.0382    -3.3576           -0.2030           -0.0533
+      0.0379    -3.5060           -0.2070           -0.0585
+> round(stable$R2yz.dx*100,1)
+[1] 2.3 2.1 3.0
+> round(stable$R2dz.x*100,1)
+[1] 0.1 1.2 0.5
+> 
+> 
+> proc.time()
+   user  system elapsed 
+ 13.937   0.393  14.606 
