@@ -1,0 +1,281 @@
+
+R version 4.1.2 (2021-11-01) -- "Bird Hippie"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> # Sensitivity Analysis
+> # Last Updated Wed Apr 13 2022
+> library(tidyverse)
+── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
+✔ ggplot2 3.3.5     ✔ purrr   0.3.4
+✔ tibble  3.1.6     ✔ dplyr   1.0.7
+✔ tidyr   1.1.4     ✔ stringr 1.4.0
+✔ readr   2.1.0     ✔ forcats 0.5.1
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+> library(texreg)
+Version:  1.37.5
+Date:     2020-06-17
+Author:   Philip Leifeld (University of Essex)
+
+Consider submitting praise using the praise or praise_interactive functions.
+Please cite the JSS article in your publications -- see citation("texreg").
+
+Attaching package: ‘texreg’
+
+The following object is masked from ‘package:tidyr’:
+
+    extract
+
+> library(fixest)
+(Permanently remove the following message with fixest_startup_msg(FALSE).)
+fixest 0.10.0:
+- vcov: new argument 'vcov' that replaces 'se' and 'cluster' in all functions
+(retro compatibility is ensured).
+- function 'dof()' has been renamed into 'ssc()' (i.e. small sample correction).
+From fixest 0.9.0 onward: BREAKING changes! 
+- In i():
+    + the first two arguments have been swapped! Now it's i(factor_var,
+continuous_var) for interactions.
+    + argument 'drop' has been removed (put everything in 'ref' now).
+- In feglm(): 
+    + the default family becomes 'gaussian' to be in line with glm(). Hence, for
+Poisson estimations, please use fepois() instead.
+> library(sandwich)
+> library(parallel)
+> library(boot)
+> library(here)
+here() starts at /Users/elisha/Dropbox/current-research/Glynn - Race and Policing/Papers/Published Papers/JOP_RacialBias
+> ### functions 
+> source(here('analysis','sensitivity-functions.R'))
+> 
+> ### load data -------
+> load(here('data','ois_data_for_models.RData'))
+> 
+> # Subset data to just Black and white  -----
+> # with Black as left out category
+> # this is necessary bc for fatalities White > Black
+> # these are models will use for outcome test
+> # use scaled distance
+> df <- orig %>% filter(White == 1 | Black == 1) %>%
++   select(fatal, White, Black, Houston, King_County, Los_Angeles, Orlando,San_Jose,
++          Seattle, Tucson, Charlotte, trauma10)
+> 
+> df <- orig_bl_wh %>% 
++   select(fatal, White, Black, Houston, King_County, Los_Angeles, Orlando,San_Jose,
++          Seattle, Tucson, Charlotte, trauma10, city_factor, new_group_id) %>%
++   na.omit()
+> 
+> cluster_variable <- "new_group_id"
+> 
+> # Table 9 Appendix Poisson  -----
+> pois_main <- glm(fatal ~ White +
++                    Houston + King_County + Los_Angeles + Orlando + 
++                    San_Jose + Seattle  + Tucson + trauma10,
++                  data = df, 
++                  family = poisson(link = "log"))
+> 
+> RR_main <- exp(coef(pois_main)["White"])
+> # robust standard error
+> cov_pois_main <- vcovHC(pois_main, type = "HC0")
+> se_pois_main <- sqrt(diag(cov_pois_main))
+> tv_main <- summary(pois_main)$coefficients[,1] / se_pois_main
+> df_main <- summary(pois_main)$df[2]
+> 
+> pv_main <- 2*pt(abs(tv_main),df = df_main, lower.tail = FALSE)
+> coef_map_list2 <- list("White" = "White",
++                        "trauma10" = "Distance",
++                        "Houston" = "Houston",
++                        "King_County" = "King County",
++                        "Los_Angeles" = "Los Angeles",
++                        "Orlando" = "Orlando",
++                        #"San_Antonio" = "San Antonio",
++                        "San_Jose" = "San Jose",
++                        "Seattle" = "Seattle",
++                        "Tucson" = "Tucson",
++                        "(Intercept)" = "Intercept")
+> screenreg(pois_main)
+
+===========================
+                Model 1    
+---------------------------
+(Intercept)       -1.65 ***
+                  (0.36)   
+White              0.37 ** 
+                  (0.13)   
+Houston           -0.04    
+                  (0.39)   
+King_County        0.10    
+                  (0.50)   
+Los_Angeles        0.71    
+                  (0.36)   
+Orlando            0.31    
+                  (0.41)   
+San_Jose           0.27    
+                  (0.54)   
+Seattle            0.72    
+                  (0.39)   
+Tucson             0.65    
+                  (0.41)   
+trauma10           0.16    
+                  (0.08)   
+---------------------------
+AIC             1072.59    
+BIC             1118.31    
+Log Likelihood  -526.30    
+Deviance         486.59    
+Num. obs.        715       
+===========================
+*** p < 0.001; ** p < 0.01; * p < 0.05
+> texreg(pois_main,
++        override.se = se_pois_main,
++        override.pvalues = pv_main,
++        custom.coef.map = coef_map_list2,
++        booktabs = TRUE,
++        use.package = FALSE,
++        caption = "Poisson regression used for relative risk and outcome test",
++        float.pos = "ht!",
++        type="latex",
++        label="tab:poissonRR2",
++        file = here("tables","poisson-for-RR2.tex"))
+The table was written to the file '/Users/elisha/Dropbox/current-research/Glynn - Race and Policing/Papers/Published Papers/JOP_RacialBias/tables/poisson-for-RR2.tex'.
+
+> 
+> round(exp(coef(pois_main)),2)
+(Intercept)       White     Houston King_County Los_Angeles     Orlando 
+       0.19        1.45        0.96        1.10        2.03        1.36 
+   San_Jose     Seattle      Tucson    trauma10 
+       1.31        2.05        1.92        1.17 
+> 
+> 
+> # variables to use as benchmark
+> var_list <- as.list(c("Los_Angeles", "Seattle", "trauma10"))
+> 
+> confounder_models <- map(var_list, function(x) estimate.poisson.rhoU2(data=df,confounder=x))
+There were 50 or more warnings (use warnings() to see the first 50)
+> rhoU_white <- map_df(confounder_models, function(x) coef(x)["White"])
+> rhoU_white$RR <- exp(rhoU_white$White)
+> rhoU_white$confounder <- unlist(var_list)
+> round(rhoU_white$White,2)
+[1]  0.01  0.28 -0.10
+> 
+> # Distance as benchmark as Benchmark for both RR
+> RR_UY <- exp(coef(pois_main)["trauma10"])
+> RR_rhoU <- rhoU_white$RR[rhoU_white$confounder=="trauma10"]
+> # need to flip
+> RR_rhoU <- 1 / RR_rhoU
+> 
+> # Table 10 appendix Sensitivity analysis -----
+> bf <- bias.factor(RR_UY = RR_UY, RR_rhoU = RR_rhoU)
+> (RR_adj <- RR_main / bf)
+   White 
+1.434244 
+> 1 - (1/RR_adj)
+    White 
+0.3027685 
+> round(1 - (1/RR_adj),3)
+White 
+0.303 
+> 
+> 
+> # LA as Benchmark for both RR
+> RR_UY <- exp(coef(pois_main)["Los_Angeles"])
+> RR_rhoU <- rhoU_white$RR[rhoU_white$confounder=="Los_Angeles"]
+> 
+> bf <- bias.factor(RR_UY = RR_UY, RR_rhoU = RR_rhoU)
+> (RR_adj <- RR_main / bf)
+   White 
+1.447675 
+> 1 - (1/RR_adj)
+   White 
+0.309237 
+> round(1 - (1/RR_adj),2)
+White 
+ 0.31 
+> 
+> # Seattle as Benchmark for both RR
+> RR_UY <- exp(coef(pois_main)["Seattle"])
+> RR_rhoU <- rhoU_white$RR[rhoU_white$confounder=="Seattle"]
+> 
+> bf <- bias.factor(RR_UY = RR_UY, RR_rhoU = RR_rhoU)
+> (RR_adj <- RR_main / bf)
+   White 
+1.269472 
+> 1 - (1/RR_adj)
+    White 
+0.2122711 
+> round(1 - (1/RR_adj),2)
+White 
+ 0.21 
+> 
+> # Bootstrap Confidence Interval-------
+> set.seed(546)
+> pois_fe2 <- fepois(fatal ~ White + trauma10 + city_factor,
++                    data = df,
++                    se = "cluster",
++                    cluster = cluster_variable)
+> 
+> # TO RUN BOOTSTRAP UNCOMMENT THIS CODE --------
+> # results <- boot(data = df,
+> #                  statistic = cluster.pois2,
+> #                  R = 30000,
+> #                  parallel = "multicore")
+> # 
+> # 
+> # save(results, file=here("data","poisson_boostrap.RData"))
+> 
+> # IF DO NOT WANT TO RERUN, THIS LOADS SAVED BOOTSTRAP RESULTS ------
+> load(here("data","poisson_boostrap.RData"))
+> boot_results <- results$t
+> names(boot_results) <- names(coef(pois_fe2))
+> 
+> RR_boot <- exp(boot_results)
+> RR_boot <- as.data.frame(RR_boot)
+> names(RR_boot) <- names(coef(pois_fe2))
+> 
+> # White
+> sum(RR_boot$White<1)
+[1] 0
+> # trauma
+> sum(RR_boot$trauma10<1)
+[1] 714
+> fix <- which(RR_boot$trauma10<1)
+> RR_boot$trauma10[fix] <- 1/RR_boot$trauma10[fix]
+> # Seattle
+> sum(RR_boot$city_factorSeattle<1)
+[1] 137
+> fix <- which(RR_boot$city_factorSeattle<1)
+> RR_boot$city_factorSeattle[fix] <- 1 / RR_boot$city_factorSeattle[fix]
+> 
+> # Los Angles
+> sum(RR_boot$`city_factorLos Angeles`<1)
+[1] 77
+> fix <- which(RR_boot$`city_factorLos Angeles`<1)
+> RR_boot$`city_factorLos Angeles`[fix] <- 1/RR_boot$`city_factorLos Angeles`[fix]
+> 
+> small <- RR_boot %>%
++   select(White, trauma10, city_factorSeattle, `city_factorLos Angeles`)
+> 
+> boot_q <- apply(small, 2, function(x) quantile(x, probs=c(.025,.975)))
+> 
+> 
+> proc.time()
+   user  system elapsed 
+ 14.260   0.356  14.684 

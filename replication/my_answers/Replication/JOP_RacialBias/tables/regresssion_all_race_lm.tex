@@ -1,0 +1,37 @@
+
+\begin{table}[ht!]
+\begin{center}
+\begin{tabular}{l c c c}
+\toprule
+ & Black/White & White/Hispanic & White/Asian \\
+\midrule
+White                      & $0.16^{*}$ & $-0.04$      & $-0.16$     \\
+                           & $(0.08)$   & $(0.07)$     & $(0.12)$    \\
+Houston                    & $-0.02$    & $0.04$       & $0.01$      \\
+                           & $(0.12)$   & $(0.17)$     & $(0.21)$    \\
+King County                & $-0.01$    & $0.17$       & $0.16$      \\
+                           & $(0.17)$   & $(0.23)$     & $(0.26)$    \\
+Los Angeles                & $0.24$     & $0.39^{*}$   & $0.37$      \\
+                           & $(0.12)$   & $(0.17)$     & $(0.21)$    \\
+Orlando                    & $0.09$     & $0.05$       & $0.02$      \\
+                           & $(0.13)$   & $(0.19)$     & $(0.22)$    \\
+San Jose                   & $0.06$     & $0.20$       & $0.21$      \\
+                           & $(0.16)$   & $(0.18)$     & $(0.24)$    \\
+Seattle                    & $0.25$     & $0.57^{**}$  & $0.58^{**}$ \\
+                           & $(0.17)$   & $(0.20)$     & $(0.22)$    \\
+Tucson                     & $0.22$     & $0.63^{***}$ & $0.55^{*}$  \\
+                           & $(0.14)$   & $(0.18)$     & $(0.21)$    \\
+Closest Trauma (10s miles) & $0.07$     & $0.15^{*}$   & $0.14$      \\
+                           & $(0.05)$   & $(0.07)$     & $(0.11)$    \\
+Intercept                  & $0.15$     & $0.13$       & $0.28$      \\
+                           & $(0.11)$   & $(0.18)$     & $(0.23)$    \\
+\midrule
+RMSE                       & $0.47$     & $0.47$       & $0.45$      \\
+Num. obs.                  & $715$      & $732$        & $279$       \\
+\bottomrule
+\multicolumn{4}{l}{\scriptsize{$^{***}p<0.001$; $^{**}p<0.01$; $^{*}p<0.05$}}
+\end{tabular}
+\caption{Linear probability model regression results. Each model is run on a subset of the data to make either a Black/White, Hispanic/White or Asian/White comparison. Cluster-robust standard errors clustered on city.}
+\label{table:regression_all_comparisons_lm}
+\end{center}
+\end{table}

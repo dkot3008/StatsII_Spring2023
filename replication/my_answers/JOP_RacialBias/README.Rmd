@@ -1,0 +1,163 @@
+---
+title: "README"
+date: "5/4/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Project Details
+
+"Are Police Racially Biased in the Decision to Shoot?" Tom S. Clark, Elisha Cohen, Adam Glynn, Michael Leo Owens, Anna Gunderson, and Kaylyn Jackson Schiff. The Journal of Politics 0 0:0, 000-000
+
+## Running instructions
+
+**For Unix machines:**
+
+  1. To run the R code and create all figures and tables use the Terminal to run the Makefile. Using the command line, navigate to the main folder (using the `cd` command if necessary) and run the Makefile. You don't need to call the Makefile directly.
+
+```{r,eval=FALSE}
+cd JOP_RacialBias
+make
+```
+
+**On a Windows machine:**
+
+1. You will need to run the R files (1-6) manually. If you are working in RStudio it is useful (but not required) to first open the `JOP_RacialBias.Rproj` file and then run all of the R scripts.
+
+For *all* machines you will need to have the package and versions listed below in the package requirements section.
+
+### File Structure
+
+```
+├── Makefile
+├── README.Rmd
+├── README.html
+├── JOP_RacialBias.Rproj
+├── Codebook.xlsx
+├── maps.zip
+│   ├── maps_readme.pdf
+│   ├── maps
+├── analysis
+│   ├── 1-create-data.R
+│   ├── 2-descriptive-figures.R
+│   ├── 3-main-regression.R
+│   ├── 4-sensitivity.R
+│   ├── 5-appendix.R
+│   ├── 6-sensitivity-LPM.R
+│   ├── sensitivity-functions.R
+├── data
+│   ├── ois.RDS
+│   ├── ois_data_for_models.RData
+│   ├── poisson_boostrap.RData
+│   ├── DC_stop_data.csv
+│   ├── sqf.RData
+├── figs
+│   ├── ObsPerMonth-fig1.tiff
+│   ├── charlotte.png
+│   ├── houston.png
+│   ├── kingcounty.png
+│   ├── losangeles.png
+│   ├── orlando.png
+│   ├── sanjose.png
+│   ├── seattle.png
+│   ├── tucson.png
+├── tables
+│   ├── main-glm-regression.tex
+│   ├── logistic-FE-models.tex
+│   ├── lpm-FE-models.tex
+│   ├── poisson-FE-models.tex
+│   ├── regresssion_all_race_glm.tex
+│   ├── regression_all_comparisons_lm
+│   ├── regression_all_comparisons_logit
+│   ├── lpm-sensitivity1.tex
+|   ├── poisson-for-RR2.tex
+```
+
+### Software requirements
+
+R version 4.1.2 (2021-11-01)
+
+Platform: x86_64-apple-darwin17.0 (64-bit)
+
+Running under: macOS Monterey 12.0.1
+
+GNU Make 3.81
+
+### Package requirements
+
+- tidyverse_1.3.1
+  - ggplot2_3.3.5
+  - dplyr_1.0.7
+  - tidyr_1.1.4
+  - readr_2.1.0
+  - purrr_0.3.4
+  - tibble_3.1.6
+  - stringr_1.4.0
+  - forcats_0.5.1)
+- here_1.0.1
+- lubridate_1.8.0
+- patchwork_1.1.1
+- sandwich_3.0-1
+- texreg_1.37.5
+- fixest_0.10.1
+- boot_1.3-28
+- knitr_1.36
+- rmarkdown_2.11
+- lfe_2.8-8
+- Matrix_1.3-4
+
+
+## File Descriptions
+
+### 1-create-data.R
+
+- Input: `ois.RDS`
+- Output: `ois_data_for_models.RData`
+
+This file makes variables necessary for models in the paper. The dataset created is used in all subsequent files.
+
+### 2-descriptive-figures.R
+
+ - Input: `ois_data_for_models.RData`
+ - Output: `ObsPerMonth-fig1.tiff`
+ 
+ This file does the calculations for Table 1 as well as the reported chi-squared values. It also creates Figure 2.
+ 
+### 3-main-regression.R
+
+- Input: `ois_data_for_models.RData`
+- Output: `main-glm-regression.tex`
+
+This file estimates the four logistic models presented in Table 2 in the main paper. This also calculates the predicted probabilities discussed on page 25.
+
+### 4-sensitivity.R
+
+- Input: `ois_data_for_models.RData`,`poisson_boostrap.RData`, `sensitivity-functions.R`
+- Output: `poisson-for-RR2.tex`
+
+This estimates Poisson model reported in Table 9 of the appendix and then the sensitivity analysis that is discussed in Section G of the appendix and reported in Table 10. This also estimates the bootstrap confidence intervals for this model. These bootstrap results have been pre-run and stored as `poisson_boostrap.RData` so that they can be quickly loaded.  If you want to re-run this bootstrap, uncomment the code and start with seed 546. The run time is a little over 6 minutes. Note that this code is written to take advantage of using multiple cores so as to run faster. Therefore, when you run the bootstrap simulations, do not run other programs in R because this can cause the program to abort. 
+
+### 5-appendix.R
+
+- Input: `ois_data_for_models.RData`,`DC_stop_data.csv`, `sqf.RData`
+- Output: `logistic-FE-models.tex`,`lpm-FE-models.tex`,`poisson-FE-models.tex`,`regresssion_all_race_glm.tex`,`regression_all_comparisons_lm`,`regression_all_comparisons_logit`
+
+This estimates Tables 5,6,7,8,11,12,13 as well as the coefficients and lower bounds discussed on page 13 of the appendix.
+
+### 6-sensitivity-LPM.R
+
+- Input: `ois_data_for_models.RData`
+- Output: `lpm-sensitivity1.tex`
+
+This estimates the sensitivity analysis on the linear probility model shown in Table 14 of the appendix.
+
+### sensitivity-functions.R
+
+This has functions used for estimating the sensitivity analysis and bootstrap.
+
+### maps.zip
+
+Figure 3 was created using QGIS which is opensource GIS software. This zip file contains `maps_readme.pdf` that has instructions on how to re-create the maps as well as the necessary shapefiles. The png files of the maps are saved in the figs folder for completeness.

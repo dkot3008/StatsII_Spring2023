@@ -16,6 +16,11 @@ autoplot(km)
 km_socBranch <- survfit(child_surv ~ socBranch, data = child)
 autoplot(km_socBranch)
 
+km_ileg <- survfit(child_surv ~ illeg, data = child)
+autoplot(km_ileg)
+
+km_age <- survfit(child_surv ~ birthdate, data = child)
+autoplot(km_age)
 # b)
 cox <- coxph(child_surv ~ sex + socBranch, data = child)
 summary(cox)
