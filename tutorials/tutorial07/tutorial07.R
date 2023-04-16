@@ -55,7 +55,7 @@ child_surv <- with(child, Surv(enter, exit, event))
 km <- survfit(child_surv ~ 1, data = child)
 summary(km, times = seq(0, 15, 1))
 plot(km, main = "Kaplan-Meier Plot", xlab = "Years", ylim = c(0.7, 1))
-autoplot(kn)
+autoplot(km)
 
 km_socBranch <- survfit(child_surv ~ socBranch, data = child)
 autoplot(km_socBranch)

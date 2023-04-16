@@ -1,0 +1,158 @@
+---
+title: "Problem set 4"
+author: "Darragh"
+date: "2023-04-16"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Problem set 4
+Question 1
+We’re interested in modeling the historical causes of child mortality. We have data from 26855 children born in Skellefte ̊a, Sweden from 1850 to 1884. Using the ”child” dataset in the eha library, fit a Cox Proportional Hazard model using mother’s age and infant’s gender as covariates. Present and interpret the output.
+```{r}
+# remove objects
+rm(list=ls())
+# detach all libraries
+detachAllPackages <- function() {
+  basic.packages <- c("package:stats", "package:graphics", "package:grDevices", "package:utils", "package:datasets", "package:methods", "package:base")
+  package.list <- search()[ifelse(unlist(gregexpr("package:", search()))==1, TRUE, FALSE)]
+  package.list <- setdiff(package.list, basic.packages)
+  if (length(package.list)>0)  for (package in package.list) detach(package,  character.only=TRUE)
+}
+detachAllPackages()
+
+# load libraries
+pkgTest <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[,  "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg,  dependencies = TRUE)
+  sapply(pkg,  require,  character.only = TRUE)
+}
+
+# here is where you load any necessary packages
+# ex: stringr
+ lapply(c("stringr"),  pkgTest)
+
+lapply(c("survival", "eha", "tidyverse", "ggfortify", "stargazer"),  pkgTest)
+## Load library
+library(ggplot2)
+library(tidyverse)
+library(lubridate)
+library(eha)
+```
+
+```{r}
+data("child")
+dat <- child
+```
+Overview of the data
+
+```{r}
+glimpse(dat)
+child_surv <- with(dat, Surv(enter, exit, event))
+km <- survfit(child_surv ~ 1, data = dat)
+summary(km, times = seq(0, 15, 1))
+plot(km, main = "Kaplan-Meier Plot", xlab = "Years", ylim = c(0.7, 1))
+autoplot(km)
+```
+
+```{r}
+### effcts
+##mage not working as continous, so bins
+dat$m.age <-cut(dat$m.age, breaks=c(15, 20,25,30, 35, 40,45, 50), right = FALSE)
+kn_mage <- survfit(child_surv ~ m.age, data = dat)
+autoplot(kn_mage)
+#####mage
+cox_mage <- coxph(child_surv ~ m.age , data = dat)
+summary(cox_mage)
+drop1(cox_mage, test = "Chisq")
+stargazer(cox_mage, type = "text")
+exp(-0.358)###20,25   
+exp(-0.272)###25,30  
+exp(-0.295)###30,35 
+exp(-0.224)###35,40 
+
+```
+The coefficients in the output show the hazard ratio for each age category relative to the reference category (15- 20), after adjusting for infant gender. For example, the hazard ratio for ages between 20 and 25 is exp(-0.358) = 0.698, which means that the hazard (risk) of death for infants born to mothers in this age group is 0.698 times the hazard for infants born to mothers under age 20, after adjusting for gender. Similarly, the hazard ratio for ages between 25 and 30 is 0.762, indicating a lower risk of death compared to the reference group, and the hazard ratio for ages between 30 and 35 is 0.744, also indicating a lower risk of death.
+
+The standard errors in parentheses indicate the precision of the estimates. The R-squared value is very low (0.001), indicating that the model explains very little of the variability in the data.
+
+Overall, this output suggests that infants born to mothers in older age categories have a lower risk of mortality than infants born to younger mothers, after adjusting for gender. However, the effect sizes are small, and other factors not included in the model may have a stronger influence on child mortality
+```{r}
+##sex graph
+kn_s <- survfit(child_surv ~ sex, data = dat)
+autoplot(kn_s)
+####sex
+cox_s <- coxph(child_surv ~ sex , data = dat)
+summary(cox_s)
+drop1(cox_s, test = "Chisq")
+stargazer(cox_s, type = "text")
+exp(-0.083)## female
+```
+The coefficient in the output shows the hazard ratio for females relative to males, after adjusting for mother's age. In this case, the hazard ratio for females is exp(-0.083) = 0.920, which means that the hazard (risk) of death for female infants is 0.920 times the hazard for male infants, after adjusting for mother's age.
+
+The standard error in parentheses indicates the precision of the estimate. The R-squared value is very low (0.0004), indicating that the model explains very little of the variability in the data.
+
+Overall, this output suggests that male infants have a slightly higher risk of mortality than female infants, after adjusting for mother's age. However, the effect size is small, and other factors not included in the model may have a stronger influence on child mortality.
+```{r}
+##sex and mage additive
+#########could be improved by seperating data by gender
+kn_s_mage_a <- survfit(child_surv ~ sex + m.age, data = dat)
+autoplot(kn_s_mage_a)
+##sex and mage interactive
+cox_s_mage_i <- coxph(child_surv ~ sex * m.age, data = dat)
+summary(cox_s_mage_i)
+drop1(cox_s_mage_i, test = "Chisq")
+stargazer(cox_s_mage_i, type = "text")
+# exponentiate parameter estimates to obtain hazard ratios
+exp(-0.348)###20,25  and male
+exp(-0.264)###25,30 and male
+exp(-0.282)###30,35 and male
+exp(-0.265)###35,40 and male
+##additive
+cox_s_mage_a <- coxph(child_surv ~ sex + m.age, data = dat)
+summary(cox_s_mage_a)
+drop1(cox_s_mage_a, test = "Chisq")
+stargazer(cox_s_mage_a, type = "text")
+exp(-0.082)##female
+exp(-0.355)##20-25
+exp(-0.270)#25,30
+exp(-0.293)#30,35
+exp(-0.223)#35,40
+```
+Based on the results of the Cox proportional hazards models you ran, we can make the following conclusions:
+
+Age is significantly associated with child survival. Children in the age group 20-25 have a significantly higher hazard of child death compared to the reference age group (0-20). Similarly, children in the age groups 25-30, 30-35, and 35-40 have significantly higher hazards of child death compared to the reference group.
+Sex is also significantly associated with child survival. Female children have a significantly lower hazard of child death compared to male children.
+There is evidence of an interaction between sex and age on child survival. However, the coefficients for the interaction terms are not significant, indicating that the effect of age on child survival does not differ significantly between male and female children.
+When looking at the hazard ratios for the age groups, we see that the hazard of child death decreases with increasing age, meaning that older children are less likely to die than younger children.
+When looking at the hazard ratio for sex, we see that female children have a 8% lower hazard of child death than male children.
+
+The Cox proportional hazards model is a type of survival analysis model used to examine the association between predictor variables and time-to-event outcomes. In this case, the outcome of interest is child survival, and the predictor variables include the mother's age group and sex.
+
+The parameter estimates obtained from the Cox proportional hazards models for the two models are as follows:
+
+Model with interaction term:
+The hazard ratio for females compared to males is exp(-0.085) = 0.919.
+The hazard ratio for the age group 20-25 compared to the reference group (under 20) for males is exp(-0.348) = 0.706.
+The hazard ratio for the age group 25-30 compared to the reference group (under 20) for males is exp(-0.264) = 0.768.
+The hazard ratio for the age group 30-35 compared to the reference group (under 20) for males is exp(-0.282) = 0.754.
+The hazard ratio for the age group 35-40 compared to the reference group (under 20) for males is exp(-0.265) = 0.767.
+Model without interaction term:
+The hazard ratio for females compared to males is exp(-0.082) = 0.921.
+The hazard ratio for the age group 20-25 compared to the reference group (under 20) for males is exp(-0.355) = 0.701.
+The hazard ratio for the age group 25-30 compared to the reference group (under 20) for males is exp(-0.270) = 0.763.
+The hazard ratio for the age group 30-35 compared to the reference group (under 20) for males is exp(-0.293) = 0.746.
+The hazard ratio for the age group 35-40 compared to the reference group (under 20) for males is exp(-0.223) = 0.800.
+In general, a hazard ratio less than 1 indicates a lower risk of the event (in this case, child mortality) for the group being compared to the reference group, while a hazard ratio greater than 1 indicates a higher risk.
+
+Comparing the two models, we can see that the estimates for the age groups are similar, but the estimates for the effect of sex differ slightly. In the model without an interaction term, the hazard ratio for females is slightly higher (0.921) compared to the model with the interaction term (0.919), indicating a slightly higher risk of child mortality for females. However, the difference is small and may not be practically significant.
+
+
+
